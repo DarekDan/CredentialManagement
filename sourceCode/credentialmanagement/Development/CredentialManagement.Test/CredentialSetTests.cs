@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Linq;
 using NUnit.Framework;
-using NUnit.Framework.Internal;
 
 namespace CredentialManagement.Test
 {
@@ -22,7 +22,8 @@ namespace CredentialManagement.Test
         [Test]
         public void CredentialSet_ShouldBeIDisposable()
         {
-            Assert.IsTrue(new CredentialSet() is IDisposable, "CredentialSet needs to implement IDisposable Interface.");
+            var disposable = new CredentialSet() as IDisposable;
+            Assert.IsNotNull(disposable, "CredentialSet needs to implement IDisposable Interface.");
         }
 
         [Test]
@@ -39,10 +40,7 @@ namespace CredentialManagement.Test
 
             CredentialSet set = new CredentialSet();
             set.Load();
-            Assert.IsTrue(set != null);
-            //TODO
-            //set.ShouldNotBeEmpty();
-
+            Assert.IsTrue(set != null && set.Any());            
             credential.Delete();
 
             set.Dispose();

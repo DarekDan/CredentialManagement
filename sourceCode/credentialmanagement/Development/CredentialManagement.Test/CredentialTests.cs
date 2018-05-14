@@ -32,7 +32,8 @@ namespace CredentialManagement.Test
         [Test]
         public void Credential_ShouldBe_IDisposable()
         {
-            Assert.IsTrue(new Credential() is IDisposable, "Credential should implement IDisposable Interface.");
+            var disposable = new Credential() as IDisposable;
+            Assert.IsNotNull(disposable, "Credential should implement IDisposable Interface.");
         }
         
         [Test]
@@ -52,8 +53,11 @@ namespace CredentialManagement.Test
         [Test]
         public void Credential_Save()
         {
-            Credential saved = new Credential("username", "password", "target", CredentialType.Generic);
-            saved.PersistanceType = PersistanceType.LocalComputer;
+            Credential saved =
+                new Credential("username", "password", "target", CredentialType.Generic)
+                {
+                    PersistanceType = PersistanceType.LocalComputer
+                };
             var result = saved.Save();
             Assert.IsTrue(result);
         }
@@ -69,8 +73,8 @@ namespace CredentialManagement.Test
         [Test]
         public void Credential_Delete_NullTerminator()
         {
-            Credential credential = new Credential((string)null, (string)null, "\0", CredentialType.None);
-            credential.Description = (string)null;
+            Credential credential =
+                new Credential(null, null, "\0", CredentialType.None) {Description = null};
             var result = credential.Delete();
             Assert.IsFalse(result);
         }
