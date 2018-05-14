@@ -1,31 +1,31 @@
 ﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SoftwareApproach.TestingExtensions;
+using NUnit.Framework;
+using NUnit.Framework.Internal;
 
 namespace CredentialManagement.Test
 {
-    [TestClass]
+    [TestFixture]
     public class CredentialSetTests
     {
-        [TestMethod]
+        [Test]
         public void CredentialSet_Create()
         {
-            new CredentialSet().ShouldNotBeNull();
+            Assert.IsNotNull(new CredentialSet());
         }
 
-        [TestMethod]
+        [Test]
         public void CredentialSet_Create_WithTarget()
         {
-            new CredentialSet("target").ShouldNotBeNull();
+            Assert.IsNotNull(new CredentialSet("target"));
         }
 
-        [TestMethod]
+        [Test]
         public void CredentialSet_ShouldBeIDisposable()
         {
             Assert.IsTrue(new CredentialSet() is IDisposable, "CredentialSet needs to implement IDisposable Interface.");
         }
 
-        [TestMethod]
+        [Test]
         public void CredentialSet_Load()
         {
             Credential credential = new Credential
@@ -39,24 +39,26 @@ namespace CredentialManagement.Test
 
             CredentialSet set = new CredentialSet();
             set.Load();
-            set.ShouldNotBeNull();
-            set.ShouldNotBeEmpty();
+            Assert.IsTrue(set != null);
+            //TODO
+            //set.ShouldNotBeEmpty();
 
             credential.Delete();
 
             set.Dispose();
         }
 
-        [TestMethod]
+        [Test]
         public void CredentialSet_Load_ShouldReturn_Self()
         {
             CredentialSet set = new CredentialSet();
-            set.Load().ShouldBeOfType(typeof (CredentialSet));
+            object result = set.Load();
+            Assert.IsInstanceOf(typeof(CredentialSet),result);
 
             set.Dispose();
         }
 
-        [TestMethod]
+        [Test]
         public void CredentialSet_Load_With_TargetFilter()
         {
             Credential credential = new Credential
@@ -68,7 +70,8 @@ namespace CredentialManagement.Test
             credential.Save();
 
             CredentialSet set = new CredentialSet("filtertarget");
-            set.Load().ShouldHaveCountOf(1);
+            var result = set.Load();
+            Assert.AreEqual(result.Count,1);
             set.Dispose();
         }
     }
