@@ -56,7 +56,7 @@ namespace CredentialManagement.Test
             Credential saved =
                 new Credential("username", "password", "target", CredentialType.Generic)
                 {
-                    PersistanceType = PersistanceType.LocalComputer
+                    PersistenceType = PersistanceType.LocalComputer
                 };
             var result = saved.Save();
             Assert.IsTrue(result);

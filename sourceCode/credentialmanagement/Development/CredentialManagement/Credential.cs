@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Permissions;
@@ -9,11 +8,11 @@ namespace CredentialManagement
 {
     public class Credential: IDisposable
     {
-
-        static object _lockObject = new object();
+        private const string PasswordExceeded512Bytes = "The password has exceeded 512 bytes.";
+        static readonly object LockObject = new object();
         bool _disposed;
 
-        static SecurityPermission _unmanagedCodePermission;
+        static readonly SecurityPermission UnmanagedCodePermission;
 
         CredentialType _type;
         string _target;
@@ -21,13 +20,13 @@ namespace CredentialManagement
         string _username;
         string _description;
         DateTime _lastWriteTime;
-        PersistanceType _persistanceType;
+        PersistanceType _persistenceType;
 
         static Credential()
         {
-            lock (_lockObject)
+            lock (LockObject)
             {
-                _unmanagedCodePermission = new SecurityPermission(SecurityPermissionFlag.UnmanagedCode);
+                UnmanagedCodePermission = new SecurityPermission(SecurityPermissionFlag.UnmanagedCode);
             }
         }
         public Credential()
@@ -56,7 +55,7 @@ namespace CredentialManagement
             Password = password;
             Target = target;
             Type = type;
-            PersistanceType = PersistanceType.Session;
+            PersistenceType = PersistanceType.Session;
             _lastWriteTime = DateTime.MinValue;
         }
 
@@ -109,14 +108,11 @@ namespace CredentialManagement
         }
         public string Password
         {
-            get
-            {
-                return SecureStringHelper.CreateString(SecurePassword);
-            }
+            get => SecureStringHelper.CreateString(SecurePassword);
             set
             {
                 CheckNotDisposed();
-                SecurePassword = SecureStringHelper.CreateSecureString(string.IsNullOrEmpty(value) ? string.Empty : value);
+                SecurePassword = SecureStringHelper.CreateSecureString(value);
             }
         }
         public SecureString SecurePassword
@@ -124,7 +120,7 @@ namespace CredentialManagement
             get
             {
                 CheckNotDisposed();
-                _unmanagedCodePermission.Demand();
+                UnmanagedCodePermission.Demand();
                 return null == _password ? new SecureString() : _password.Copy();
             }
             set
@@ -166,13 +162,8 @@ namespace CredentialManagement
             }
         }
 
-        public DateTime LastWriteTime
-        {
-            get
-            {
-                return LastWriteTimeUtc.ToLocalTime();
-            }
-        }
+        public DateTime LastWriteTime => LastWriteTimeUtc.ToLocalTime();
+
         public DateTime LastWriteTimeUtc 
         { 
             get
@@ -180,7 +171,7 @@ namespace CredentialManagement
                 CheckNotDisposed();
                 return _lastWriteTime;
             }
-            private set { _lastWriteTime = value; }
+            private set => _lastWriteTime = value;
         }
 
         public CredentialType Type
@@ -197,29 +188,29 @@ namespace CredentialManagement
             }
         }
 
-        public PersistanceType PersistanceType
+        public PersistanceType PersistenceType
         {
             get
             {
                 CheckNotDisposed();
-                return _persistanceType;
+                return _persistenceType;
             }
             set
             {
                 CheckNotDisposed();
-                _persistanceType = value;
+                _persistenceType = value;
             }
         }
 
         public bool Save()
         {
             CheckNotDisposed();
-            _unmanagedCodePermission.Demand();
+            UnmanagedCodePermission.Demand();
 
             byte[] passwordBytes = Encoding.Unicode.GetBytes(Password);
             if (Password.Length > (512))
             {
-                throw new ArgumentOutOfRangeException("The password has exceeded 512 bytes.");
+                throw new ArgumentOutOfRangeException(PasswordExceeded512Bytes);
             }
 
             NativeMethods.CREDENTIAL credential = new NativeMethods.CREDENTIAL();
@@ -229,7 +220,7 @@ namespace CredentialManagement
             credential.CredentialBlobSize = passwordBytes.Length;
             credential.Comment = Description;
             credential.Type = (int)Type;
-            credential.Persist = (int) PersistanceType;
+            credential.Persist = (int) PersistenceType;
 
             bool result = NativeMethods.CredWrite(ref credential, 0);
             if (!result)
@@ -243,7 +234,7 @@ namespace CredentialManagement
         public bool Delete()
         {
             CheckNotDisposed();
-            _unmanagedCodePermission.Demand();
+            UnmanagedCodePermission.Demand();
 
             if (string.IsNullOrEmpty(Target))
             {
@@ -258,7 +249,7 @@ namespace CredentialManagement
         public bool Load()
         {
             CheckNotDisposed();
-            _unmanagedCodePermission.Demand();
+            UnmanagedCodePermission.Demand();
 
             IntPtr credPointer;
 
@@ -277,7 +268,7 @@ namespace CredentialManagement
         public bool Exists()
         {
             CheckNotDisposed();
-            _unmanagedCodePermission.Demand();
+            UnmanagedCodePermission.Demand();
 
             if (string.IsNullOrEmpty(Target))
             {
@@ -299,7 +290,7 @@ namespace CredentialManagement
             }
             Target = credential.TargetName;
             Type = (CredentialType)credential.Type;
-            PersistanceType = (PersistanceType)credential.Persist;
+            PersistenceType = (PersistanceType)credential.Persist;
             Description = credential.Comment;
             LastWriteTimeUtc = DateTime.FromFileTimeUtc(credential.LastWritten);
         }
